@@ -10,6 +10,7 @@ import(
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.client, "food")
+
 func main(){
 
 	port := os.Getenv("PORT")
@@ -18,7 +19,7 @@ func main(){
 	}
 	router := gin.New()
 	router.Use(gin.Logger())
-	routes.UserRoutes(router)
+	routes.UserRouters(router)
 	router.Use(middleware.Authentication())
 
 	routes.FoodRouters(router)

@@ -6,7 +6,7 @@ import(
 
 )
 
-func userRoutes(incomingRoutes *gin.Engine){
+func UserRouters(incomingRoutes *gin.Engine){
 	incomingRoutes.GET("/users" , controllers.GetUsers())
 	incomingRoutes.GET("/users/:user_id" , controllers.GetUser())
 	incomingRoutes.POST("/users/signup" , controllers.SignUp())
