@@ -9,7 +9,7 @@ import(
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var foodCollection *mongo.Collection = database.OpenCollection(database.client, "food")
+var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
 
 func main(){
 
