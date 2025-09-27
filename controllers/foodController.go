@@ -47,7 +47,9 @@ func CreateFood() gin.HandlerFunc {
 
 		if err := c.BindJSON(&food); err != nil{
 			c.JSON(http.StatusBadRequest , gin.H{"error": err.Error()})
+			return
 		}
+		
 		validateionErr := validate.Struct(food)
 		if validateionErr != nil{
 			c.JSON(http.StatusBadRequest, gin.H{"error":validateionErr.Error()})
@@ -65,7 +67,7 @@ func CreateFood() gin.HandlerFunc {
 		food.Updated_at , _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		food.ID = primitive.NewObjectID()
 		food.Food_id = food.ID.Hex()
-		var num = toFxed(*food.Price ,2)
+		var num = toFixed(*food.Price ,2)
 		food.Price = &num
 
 		result, insertErr := foodCollection.InsertOne(ctx,food)
@@ -78,6 +80,8 @@ func CreateFood() gin.HandlerFunc {
 		defer cancel()
 		c.JSON(http.StatusCreated, result)
 	}
+}
+
 
 func UpdateFood() gin.HandlerFunc {
 	return func(c *gin.Context){
@@ -86,9 +90,9 @@ func UpdateFood() gin.HandlerFunc {
 }
 
 func round(num float64) int{
-
+return 20
 }
 
 func toFixed(num float64, precision int) float64{
-	
+	return  20
 }
