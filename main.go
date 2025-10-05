@@ -1,7 +1,8 @@
 package main
 
-import(
+import (
 	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rahel-yab/Restuarant-Management/database"
 	"github.com/rahel-yab/Restuarant-Management/middleware"
