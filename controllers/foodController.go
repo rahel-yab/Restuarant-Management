@@ -16,11 +16,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
+	_"log"
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
-var menuCollection *mongo.Collection = database.OpenCollection(database.Client, "menu")
 var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
@@ -45,7 +44,7 @@ func GetFoods() gin.HandlerFunc {
 			{Key: "$project", Value: bson.D{
 				{Key: "_id", Value: 0},
 				{Key: "total_count", Value: "$total_count"},
-				{Key: "food_items", Value: bson.D{{Key: "$slice", Value: []interface{}{"$data", startIndex, recordPerPage}}}}
+				{Key: "food_items", Value: bson.D{{Key: "$slice", Value: []interface{}{"$data", startIndex, recordPerPage}}}},
 			}},
 		}
 
@@ -129,6 +128,7 @@ func UpdateFood() gin.HandlerFunc {
 		var ctx , cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		foodId := c.Param("food_id")
 		var food models.Food
+		var menu models.Menu
 
 		if err := c.BindJSON(&food); err != nil{
 			c.JSON(http.StatusBadRequest, gin.H{"error":err.Error()})
@@ -146,6 +146,13 @@ func UpdateFood() gin.HandlerFunc {
 			updateObj = append(updateObj, bson.E{Key: "food_image", Value: food.Food_image})
 		}
 		if food.Menu_id != nil{
+			err := menuCollection.FindOne(ctx, bson.M{"menu_id" : food.Menu_id}).Decode(&menu)
+			defer cancel()
+			if err != nil{
+				msg := fmt.Sprintf("message:menu was not found")
+				c.JSON(http.StatusInternalServerError , gin.H{"error" : msg})
+				return 
+			}
 			updateObj = append(updateObj, bson.E{Key: "menu_id", Value: food.Menu_id})
 		}
 
