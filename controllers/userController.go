@@ -1,21 +1,20 @@
 package controllers
 
 import (
-    "context"
-    "fmt"
-    "log"
-    "net/http"
-    "time"
+	"context"
+	"log"
+	"net/http"
+	"time"
 
-    "github.com/gin-gonic/gin"
-    "github.com/go-playground/validator/v10"
-    "github.com/rahel-yab/Restuarant-Management/database"
-    "github.com/rahel-yab/Restuarant-Management/helpers"
-    "github.com/rahel-yab/Restuarant-Management/models"
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "go.mongodb.org/mongo-driver/mongo"
-    "golang.org/x/crypto/bcrypt"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/rahel-yab/Restuarant-Management/database"
+	"github.com/rahel-yab/Restuarant-Management/helpers"
+	"github.com/rahel-yab/Restuarant-Management/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
@@ -55,7 +54,6 @@ func GetUser() gin.HandlerFunc {
         c.JSON(http.StatusOK, user)
     }
 }
-
 func SignUp() gin.HandlerFunc {
     return func(c *gin.Context) {
         var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -86,9 +84,21 @@ func SignUp() gin.HandlerFunc {
         hashed := HashPassword(user.Password)
         user.Password = hashed
         user.ID = primitive.NewObjectID()
+        user.User_id = user.ID.Hex()
         user.Created_at = time.Now()
         user.Updated_at = time.Now()
-        user.Access_token, user.Refresh_token, _ = helpers.GenerateAllTokens(user.Email, user.First_name, user.Last_name, user.ID.Hex())
+
+        // safely dereference name pointers for token generation
+        first := ""
+        last := ""
+        if user.First_name != nil {
+            first = *user.First_name
+        }
+        if user.Last_name != nil {
+            last = *user.Last_name
+        }
+
+        user.Access_token, user.Refresh_token, _ = helpers.GenerateAllTokens(user.Email, first, last, user.User_id)
 
         _, insertErr := userCollection.InsertOne(ctx, user)
         if insertErr != nil {
@@ -129,10 +139,26 @@ func Login() gin.HandlerFunc {
             return
         }
 
-        access, refresh, _ := helpers.GenerateAllTokens(found.Email, found.First_name, found.Last_name, found.ID.Hex())
+        // safely dereference name pointers for token generation
+        first := ""
+        last := ""
+        if found.First_name != nil {
+            first = *found.First_name
+        }
+        if found.Last_name != nil {
+            last = *found.Last_name
+        }
 
-        // update tokens in DB
-        _, err = userCollection.UpdateOne(ctx, bson.M{"_id": found.ID}, bson.M{"$set": bson.M{"access_token": access, "refresh_token": refresh, "updated_at": time.Now()}})
+        // prefer stored user_id string; fall back to ObjectID hex
+        userID := found.User_id
+        if userID == "" && found.ID.Hex() != "" {
+            userID = found.ID.Hex()
+        }
+
+        access, refresh, _ := helpers.GenerateAllTokens(found.Email, first, last, userID)
+
+        // update tokens in DB using user_id string field
+        _, err = userCollection.UpdateOne(ctx, bson.M{"user_id": userID}, bson.M{"$set": bson.M{"access_token": access, "refresh_token": refresh, "updated_at": time.Now()}})
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update tokens"})
             return
