@@ -11,7 +11,6 @@ import (
 	_ "log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/rahel-yab/Restuarant-Management/database"
 	"github.com/rahel-yab/Restuarant-Management/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,7 +20,6 @@ import (
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
-var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
 	return func(c *gin.Context){
