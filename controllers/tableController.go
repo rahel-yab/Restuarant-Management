@@ -1,7 +1,6 @@
 package controllers
 
-
-import(
+import (
 	"context"
 	"log"
 	"net/http"
@@ -14,7 +13,6 @@ import(
 	"github.com/rahel-yab/Restuarant-Management/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,15 +38,22 @@ func GetTables() gin.HandlerFunc {
 		startIndex, _ = strconv.Atoi(c.Query("startIndex"))
 
 		matchStage := bson.D{{"$match", bson.D{{}}}}
-		groupStage := bson.D{{"$group", bson.D{{"_id":"null", "total_count":bson.D{{"$sum":1}}, "data":bson.D{{"$push":"$$"}}}}}}
-		projectStage := bson.D{
-			{"$project", bson.D{
-				{"_id":0,
-				"total_count":"$total_count",
-				"table_items": bson.D{{"$slice", []interface{}{ "$data", startIndex, recordPerPage}}}}
+		groupStage := bson.D{
+			{Key: "$group", Value: bson.D{
+				{Key: "_id", Value: "null"},
+				{Key: "total_count", Value: bson.D{{Key: "$sum", Value: 1}}},
+				{Key: "data", Value: bson.D{{Key: "$push", Value: "$$"}}},
 			}},
 		}
-
+		projectStage := bson.D{
+			{Key: "$project", Value: bson.D{
+				{Key: "_id", Value: 0},
+				{Key: "total_count", Value: "$total_count"},
+				{Key: "table_items", Value: bson.D{
+					{Key: "$slice", Value: []interface{}{"$data", startIndex, recordPerPage}},
+				}},
+			}},
+		}
 		result, err := tableCollection.Aggregate(ctx, mongo.Pipeline{matchStage, groupStage, projectStage})
 		defer cancel()
 		if err != nil{
