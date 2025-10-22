@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	_ "log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/rahel-yab/Restuarant-Management/database"
@@ -16,7 +18,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	_"log"
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
