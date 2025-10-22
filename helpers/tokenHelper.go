@@ -52,13 +52,25 @@ func ValidateToken(signedToken string) (jwt.MapClaims, error) {
 		secret = "secret"
 	}
 
-	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
-		// Verify signing algorithm
-		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
+			// Verify signing algorithm
+			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(secret), nil
+		})
+		if err != nil {
+			return nil, err
 		}
-		return []byte(secret), nil
-	})
-	if err != nil {
-		return nil, err
+	
+		if !token.Valid {
+			return nil, fmt.Errorf("invalid token")
+		}
+	
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return nil, fmt.Errorf("invalid token claims")
+		}
+	
+		return claims, nil
 	}
